@@ -1,0 +1,29 @@
+{
+  "name": "independence-probe",
+  "version": "1.0.0",
+  "description": "Independence Probe - A tool for analyzing software independence",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "build": "npm run build:renderer",
+    "build:renderer": "echo \"Building renderer...\"",
+    "lint": "eslint .",
+    "prepare": "husky install"
+  },
+  "keywords": [
+    "independence",
+    "probe",
+    "analysis",
+    "software"
+  ],
+  "author": "fkx2016",
+  "license": "MIT",
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}
