@@ -1,0 +1,94 @@
+name: Release Workflow
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Create release notes with commit history
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          
+          echo "## Release Notes for ${VERSION}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### Changes in this release:" >> release_notes.md
+          echo "" >> release_notes.md
+          
+          # Get commits since last tag (or all commits if no previous tag)
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            # If no previous tag, get all commits
+            git log --pretty=format:"- %s" --reverse >> release_notes.md
+          else
+            # Get commits since last tag
+            git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --reverse >> release_notes.md
+          fi
+          
+          echo "" >> release_notes.md
+          echo "### Contributors:" >> release_notes.md
+          echo "" >> release_notes.md
+          
+          # Get unique contributors since last tag
+          if [ -z "$LAST_TAG" ]; then
+            git log --pretty=format:"- @%an" | sort -u >> release_notes.md
+          else
+            git log ${LAST_TAG}..HEAD --pretty=format:"- @%an" | sort -u >> release_notes.md
+          fi
+          
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "Generated on $(date)" >> release_notes.md
+          
+          # Set output for later steps
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Release notes generated for ${VERSION}"
+          cat release_notes.md
+      
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_notes.outputs.version }}
+          release_name: Release ${{ steps.release_notes.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+      
+      - name: Upload release notes as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes-${{ steps.release_notes.outputs.version }}
+          path: release_notes.md
+          retention-days: 90
+      
+      - name: Post-release cleanup
+        run: |
+          echo "Release ${{ steps.release_notes.outputs.version }} completed successfully!"
+          echo "Release notes have been generated and attached to the release."
