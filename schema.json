@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Independence Probe Schema",
+  "description": "Schema for Independence Probe analysis results",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version"
+    },
+    "probe": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique probe identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Probe name"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Analysis timestamp"
+        }
+      },
+      "required": ["id", "name", "timestamp"]
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Target file or directory path"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["file", "directory", "package"],
+          "description": "Type of target being analyzed"
+        }
+      },
+      "required": ["path", "type"]
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Dependency name"
+          },
+          "version": {
+            "type": "string",
+            "description": "Dependency version"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["direct", "transitive"],
+            "description": "Dependency type"
+          },
+          "independence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Independence score (0-1)"
+          }
+        },
+        "required": ["name", "version", "type", "independence_score"]
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "properties": {
+        "overall_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall independence score"
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "Risk assessment level"
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Improvement recommendations"
+        }
+      },
+      "required": ["overall_score", "risk_level"]
+    }
+  },
+  "required": ["version", "probe", "target", "dependencies", "analysis"]
+}
